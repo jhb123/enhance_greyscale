@@ -16,15 +16,18 @@ import enhance_greyscale_network
 
 
 class ImageDataset(Dataset):
-    def __init__(self, high_res_img_dir, low_res_img_dir):
+    def __init__(self, high_res_img_dir, low_res_img_dir, length=-1):
         self.high_res_img_dir = Path(high_res_img_dir)
         self.low_res_img_dir = Path(low_res_img_dir)
-        # for i,_ in enumerate(self.low_res_img_dir.glob('*.png')):
-        #     pass
-        # self.length = i
+        if length == -1:
+            for i, _ in enumerate(self.low_res_img_dir.glob('*.png')):
+                pass
+            self.length = i
+        else:
+            self.length = length
 
     def __len__(self):
-        return 10000  # self.length
+        return self.length
 
     def __getitem__(self, idx):
         fname = f"{str(idx):0>7}.png"
@@ -58,7 +61,6 @@ def show_image(low_res_img, high_res_img, learned_img):
 
 def train_loop(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
-    print(size)
     for batch, (high_res, low_res) in enumerate(dataloader):
         # Compute prediction and loss
         pred = model(low_res)
@@ -70,8 +72,9 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         optimizer.step()
 
         if batch % 100 == 0:
-            loss, current = loss.item(), batch * len(low_res)
-            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+            loss_f, current = loss.item(), batch * len(low_res)
+            print(f"loss: {loss_f:>7f}  [{current:>5d}/{size:>5d}]")
+    return loss.item()
 
 
 def test_loop(dataloader, model, loss_fn):
@@ -85,15 +88,11 @@ def test_loop(dataloader, model, loss_fn):
 
     test_loss /= num_batches
     print(f"Avg loss: {test_loss:>8f} \n")
+    return test_loss
 
 
-def main():
-
-    images = ImageDataset('gs_imgs_hr_x2', 'gs_imgs_lr_x2')
-
-    learning_rate = 1e-2
-    batch_size = 10
-    epochs = 1
+def load_datasets(high_res_dir, low_res_dir, batch_size, length=-1):
+    images = ImageDataset(high_res_dir, low_res_dir, length)
 
     train_count = int(0.7 * len(images))
     valid_count = int(0.2 * len(images))
@@ -112,8 +111,23 @@ def main():
     test_dataset_loader = torch.utils.data.DataLoader(
         test_dataset, batch_size=batch_size, shuffle=False)
 
+    return train_dataset_loader, valid_dataset_loader, test_dataset_loader, images
+
+
+def main():
+
+    learning_rate = 1e-2
+    batch_size = 10
+    epochs = 50
+    dataset_size = 100000
+
     model = enhance_greyscale_network.GreyscaleSuperResModel(2)
     loss = torch.nn.MSELoss()
+
+    train_dataset_loader, _, test_dataset_loader, images = \
+        load_datasets('gs_imgs_hr_x2', 'gs_imgs_lr_x2',
+                      batch_size, dataset_size)
+
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     for epoch in range(epochs):
@@ -122,24 +136,14 @@ def main():
         test_loop(test_dataset_loader, model, loss)
     print("Done!")
 
+    torch.save(model, 'enhance_x2.pt')
+
     test_img = images[0]
     learned = model(test_img[1]).detach()
     low_res = test_img[1].detach()
     high_res = test_img[0].detach()
 
     show_image(low_res, high_res, learned)
-
-    test_image = cv2.imread(r"crossword.jpeg")[1000:1500, 0:800]
-    test_image_gs = cv2.cvtColor(test_image, cv2.COLOR_BGR2GRAY)
-
-    test_image_gs_norm = test_image_gs.astype(np.float32)/255
-
-    super_res = model(torch.tensor(test_image_gs_norm).unsqueeze(0))
-
-    cv2.imshow("input", test_image_gs)
-    cv2.imshow("super res", super_res.squeeze(0).detach().numpy())
-
-    cv2.waitKey()
 
 
 if __name__ == "__main__":

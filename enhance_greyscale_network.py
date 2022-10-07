@@ -31,8 +31,8 @@ class GreyscaleSuperResModel(nn.Module):
         # f_l function applied to matrix elementwise
 
 
-        self.conv1 = nn.Conv2d(1, 64, 5,padding='same') # 5x5 kernel, 64 features
-        self.conv2 = nn.Conv2d(64, 32, 3,padding='same') # 3x3 kernel, 32 features
+        self.conv1 = nn.Conv2d(1, 64, 5,padding='same',padding_mode='reflect') # 5x5 kernel, 64 features
+        self.conv2 = nn.Conv2d(64, 32, 3,padding='same',padding_mode='reflect') # 3x3 kernel, 32 features
         self.conv3 = nn.Conv2d(32,res**2,1) #
 
 
