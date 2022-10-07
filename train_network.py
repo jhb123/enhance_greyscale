@@ -10,10 +10,7 @@ import torch
 from torchvision.io import read_image
 from torch.utils.data import Dataset
 import matplotlib.pyplot as plt
-import cv2
-import numpy as np
 import enhance_greyscale_network
-
 
 class ImageDataset(Dataset):
     def __init__(self, high_res_img_dir, low_res_img_dir, length=-1):
@@ -116,9 +113,9 @@ def load_datasets(high_res_dir, low_res_dir, batch_size, length=-1):
 
 def main():
 
-    learning_rate = 1e-2
+    learning_rate = 1e-4
     batch_size = 10
-    epochs = 50
+    epochs = 2
     dataset_size = 100000
 
     model = enhance_greyscale_network.GreyscaleSuperResModel(2)

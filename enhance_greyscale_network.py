@@ -8,7 +8,6 @@ Created on Wed Oct  5 17:34:03 2022
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 class GreyscaleSuperResModel(nn.Module):
 
@@ -38,9 +37,10 @@ class GreyscaleSuperResModel(nn.Module):
 
 
     def forward(self,x):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = F.relu(self.conv3(x))
+        
+        x = torch.tanh(self.conv1(x))
+        x = torch.tanh(self.conv2(x))
+        x = torch.tanh(self.conv3(x))
         pixel_shuffle = nn.PixelShuffle(self.res)
         x = pixel_shuffle(x)
         return x
