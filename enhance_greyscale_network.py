@@ -30,17 +30,21 @@ class GreyscaleSuperResModel(nn.Module):
         # f_l function applied to matrix elementwise
 
 
-        self.conv1 = nn.Conv2d(1, 64, 5,padding='same',padding_mode='reflect') # 5x5 kernel, 64 features
-        self.conv2 = nn.Conv2d(64, 32, 3,padding='same',padding_mode='reflect') # 3x3 kernel, 32 features
-        self.conv3 = nn.Conv2d(32,res**2,1) #
+        self.conv1 = nn.Conv2d(1, 128, 9,padding='same',padding_mode='reflect') # 5x5 kernel, 64 features
+        self.conv2 = nn.Conv2d(128, 64, 5,padding='same',padding_mode='reflect') # 3x3 kernel, 32 features
+        self.conv3 = nn.Conv2d(64, 64, 5,padding='same',padding_mode='reflect') # 3x3 kernel, 32 features
+
+        self.conv4 = nn.Conv2d(64,res**2,1) #
 
 
 
     def forward(self,x):
         
-        x = torch.tanh(self.conv1(x))
-        x = torch.tanh(self.conv2(x))
-        x = torch.tanh(self.conv3(x))
+        x = torch.relu(self.conv1(x))
+        x = torch.relu(self.conv2(x))
+        x = torch.relu(self.conv3(x))
+        x = torch.relu(self.conv4(x))
+
         pixel_shuffle = nn.PixelShuffle(self.res)
         x = pixel_shuffle(x)
         return x
