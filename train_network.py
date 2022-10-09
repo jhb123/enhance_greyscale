@@ -11,6 +11,8 @@ from torchvision.io import read_image
 from torch.utils.data import Dataset
 import matplotlib.pyplot as plt
 import enhance_greyscale_network
+from torchmetrics import PeakSignalNoiseRatio
+
 
 class ImageDataset(Dataset):
     def __init__(self, high_res_img_dir, low_res_img_dir, length=-1):
@@ -58,6 +60,8 @@ def show_image(low_res_img, high_res_img, learned_img):
 
 def train_loop(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
+    psnr = PeakSignalNoiseRatio(data_range=1)
+
     for batch, (high_res, low_res) in enumerate(dataloader):
         # Compute prediction and loss
         pred = model(low_res)
@@ -70,7 +74,8 @@ def train_loop(dataloader, model, loss_fn, optimizer):
 
         if batch % 100 == 0:
             loss_f, current = loss.item(), batch * len(low_res)
-            print(f"loss: {loss_f:>7f}  [{current:>5d}/{size:>5d}]")
+            noise_metric = psnr(pred, high_res).item()
+            print(f"loss: {loss_f:>7f}, psnr = {noise_metric:>7f}  [{current:>6d}/{size:>6d}]")
     return loss.item()
 
 
@@ -115,18 +120,18 @@ def main():
 
     learning_rate = 1e-4
     batch_size = 10
-    epochs = 2
-    dataset_size = 100000
+    epochs = 1
+    dataset_size = int(1e6)
 
     model = enhance_greyscale_network.GreyscaleSuperResModel(2)
     loss = torch.nn.MSELoss()
-
+    
     train_dataset_loader, _, test_dataset_loader, images = \
         load_datasets('gs_imgs_hr_x2', 'gs_imgs_lr_x2',
                       batch_size, dataset_size)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
+    
     for epoch in range(epochs):
         print(f"Epoch {epoch+1}\n-------------------------------")
         train_loop(train_dataset_loader, model, loss, optimizer)
