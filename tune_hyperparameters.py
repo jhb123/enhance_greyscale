@@ -164,8 +164,8 @@ def epoch_investigation(epochs, learning_rate,
 
 def main():
 
-    epochs = 5
-    dataset_size = 1000
+    epochs = 1
+    dataset_size = 10000
 
     model = enhance_greyscale_network.GreyscaleSuperResModel(2)
     loss = torch.nn.MSELoss()
@@ -184,10 +184,10 @@ def main():
     # tune_learning_rate(25,np.logspace(-5,-1,4),train_dataset_loader,
     #                         valid_dataset_loader,model,loss)
 
-    learning_rate = 1e-2
+    learning_rate = 1e-4
 
     # test 3: investigate the effect of training set size. 
-    tune_training_set_size(epochs,np.logspace(1,4,3).astype(int),model,
+    tune_training_set_size(epochs,np.logspace(1,6,10).astype(int),model,
                                     loss,batch_size,learning_rate)
 
     # test 4: investigate the effect of epochs
