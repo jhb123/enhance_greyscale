@@ -5,6 +5,7 @@ Created on Wed Oct  5 17:42:00 2022
 
 @author: josephbriggs
 """
+import argparse
 from pathlib import Path
 import torch
 from torchvision.io import read_image
@@ -56,6 +57,7 @@ def show_image(low_res_img, high_res_img, learned_img):
     ax[2].set_xticks([])
     ax[2].set_yticks([])
     ax[2].set_title('Learned')
+    plt.show()
 
 
 def train_loop(dataloader, model, loss_fn, optimizer):
@@ -96,38 +98,59 @@ def test_loop(dataloader, model, loss_fn):
 def load_datasets(high_res_dir, low_res_dir, batch_size, length=-1):
     images = ImageDataset(high_res_dir, low_res_dir, length)
 
-    train_count = int(0.7 * len(images))
-    valid_count = int(0.2 * len(images))
-    test_count = len(images) - train_count - valid_count
+    train_count = int(0.9 * len(images))
+    test_count = len(images) - train_count
 
-    train_dataset, valid_dataset, test_dataset =  \
+    train_dataset, test_dataset =  \
         torch.utils.data.random_split(
-            images, (train_count, valid_count, test_count))
+            images, (train_count, test_count))
 
     train_dataset_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=batch_size, shuffle=True)
 
-    valid_dataset_loader = torch.utils.data.DataLoader(
-        valid_dataset, batch_size=batch_size, shuffle=True)
 
     test_dataset_loader = torch.utils.data.DataLoader(
         test_dataset, batch_size=batch_size, shuffle=False)
 
-    return train_dataset_loader, valid_dataset_loader, test_dataset_loader, images
+    return train_dataset_loader, test_dataset_loader, images
 
 
 def main():
 
-    learning_rate = 1e-4
-    batch_size = 10
-    epochs = 1
-    dataset_size = int(1e6)
+    
+    parser = argparse.ArgumentParser(description='train the enhancement neural network.')
+    parser.add_argument('--high_res', "-hr", type=str,
+                        help='directory of the high resoultion training set.')
+    parser.add_argument('--low_res', "-lr", type=str,
+                        help='directory of the low resoultion training set.')
+    parser.add_argument('--resolution', "-r", type=int,
+                        help='upscaling factor.')
+    
+    parser.add_argument('--learning_rate', "-a", type=float,default = 1e-4,
+                        help='learning rate.')
+    parser.add_argument('--batch_size', "-b", type=int,default = 10,
+                        help='batch size.')
+    parser.add_argument('--epochs', "-e", type=int,default = 1,
+                        help='number of passes through the data set.')
+    parser.add_argument('--datasubset', "-d", type=int,default = -1,
+                        help='Amount of data to train with.')
+    
+    args = parser.parse_args()
 
-    model = enhance_greyscale_network.GreyscaleSuperResModel(2)
+    
+    
+    learning_rate = args.learning_rate
+    batch_size = args.batch_size
+    epochs = args.epochs
+    dataset_size = args.datasubset
+    
+    res_factor = args.resolution
+
+    model = enhance_greyscale_network.GreyscaleSuperResModel(res_factor)
     loss = torch.nn.MSELoss()
     
-    train_dataset_loader, _, test_dataset_loader, images = \
-        load_datasets('gs_imgs_hr_x2', 'gs_imgs_lr_x2',
+    train_dataset_loader, test_dataset_loader, images = \
+        load_datasets(args.high_res, args.low_res,
                       batch_size, dataset_size)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -138,9 +161,9 @@ def main():
         test_loop(test_dataset_loader, model, loss)
     print("Done!")
 
-    torch.save(model, 'enhance_x2.pt')
+    torch.save(model, f'enhance_x{res_factor}.pt')
 
-    test_img = images[0]
+    test_img = images[1]
     learned = model(test_img[1]).detach()
     low_res = test_img[1].detach()
     high_res = test_img[0].detach()
