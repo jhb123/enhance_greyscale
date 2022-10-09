@@ -6,10 +6,8 @@ Created on Wed Oct  5 16:56:55 2022
 @author: josephbriggs
 """
 from pathlib import Path
-import glob
 import pathlib
 import argparse
-from tqdm import tqdm
 import torch
 import torchvision.transforms as transforms
 from torchvision.io import read_image,write_png
