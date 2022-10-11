@@ -12,8 +12,7 @@ from torchvision.io import read_image
 from torch.utils.data import Dataset
 import matplotlib.pyplot as plt
 import enhance_greyscale_network
-from torchmetrics import PeakSignalNoiseRatio
-
+from torchmetrics import PeakSignalNoiseRatio,StructuralSimilarityIndexMeasure
 
 class ImageDataset(Dataset):
     def __init__(self, high_res_img_dir, low_res_img_dir, length=-1):
@@ -148,12 +147,14 @@ def main():
 
     model = enhance_greyscale_network.GreyscaleSuperResModel(res_factor)
     loss = torch.nn.MSELoss()
-    
+    # loss = StructuralSimilarityIndexMeasure(data_range=1.0)
+
     train_dataset_loader, test_dataset_loader, images = \
         load_datasets(args.high_res, args.low_res,
                       batch_size, dataset_size)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
     
     for epoch in range(epochs):
         print(f"Epoch {epoch+1}\n-------------------------------")
