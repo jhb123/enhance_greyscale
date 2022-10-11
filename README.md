@@ -7,7 +7,7 @@ To upscale an image, use:
 python3 upscale_image.py -i "low_res_image.png" -o "high_Res_image.png"
 ```
 
-To generate a set of training data from images within a file, use:
+To generate a set of training data from images within a directory, use:
 ```
 python generate_training_data.py -i "img_directory/" -o "gs_imgs" -r 4
 ```
