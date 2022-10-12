@@ -66,7 +66,7 @@ def train_loop(dataloader, model, loss_fn, optimizer):
     for batch, (high_res, low_res) in enumerate(dataloader):
         # Compute prediction and loss
         pred = model(low_res)
-        loss = loss_fn(pred, high_res)
+        loss = -1*loss_fn(pred, high_res)
 
         # Backpropagation
         optimizer.zero_grad()
@@ -147,7 +147,7 @@ def main():
 
     model = enhance_greyscale_network.GreyscaleSuperResModel(res_factor)
     loss = torch.nn.MSELoss()
-    # loss = StructuralSimilarityIndexMeasure(data_range=1.0)
+    loss = StructuralSimilarityIndexMeasure(data_range=1.0)
 
     train_dataset_loader, test_dataset_loader, images = \
         load_datasets(args.high_res, args.low_res,

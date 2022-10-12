@@ -29,15 +29,17 @@ def generate_dataset(hr_output_directory, lr_output_directory, num):
 
         size = (1000, 1000)
         W, H = size
-        background_color = random.randint(0, 255)
-        image = Image.new('L', size, background_color)
+        font_colour = random.randint(0, 255)
+        background_colour = random.randint(0, 255)
+
+        image = Image.new('L', size, background_colour)
         draw = ImageDraw.Draw(image)
         font = ImageFont.truetype(random.choice(fonts), 60)
         _, _, w, h = draw.textbbox((0, 0), word, font=font)
-        draw.text((0, 0), word, font=font, fill=random.randint(0, 255))
+        draw.text((0, 0), word, font=font, fill=font_colour)
         image = image.crop((0, 0, w, h))
         transform = transforms.RandomAffine((-180, 180), scale=(0.5, 2),
-                                            shear=(-10, 10, -10, 10), fill=background_color)
+                                            shear=(-10, 10, -10, 10), fill=background_colour)
         image = transform(image)
         transform = transforms.CenterCrop(50)
         image = transform(image)
